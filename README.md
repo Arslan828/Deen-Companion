@@ -90,30 +90,61 @@ This app can be built as a native mobile app using Capacitor:
 
 ## 🛠️ Tech Stack
 
-- **Frontend:** React 19, TypeScript, Vite
-- **Styling:** Tailwind CSS (via Lucide React icons)
-- **Mobile:** Capacitor
+- **Frontend:** React 19, TypeScript, Ionic React, Vite
+- **Mobile Framework:** Ionic with Capacitor
+- **Styling:** Ionic CSS, Tailwind CSS (via Lucide React icons)
 - **AI:** Google Gemini API
 - **APIs:** Aladhan API, Quran API
 - **Storage:** IndexedDB (local storage)
 
-## 📂 Project Structure
+## � Mobile App Deployment
 
-```
-deen-companion/
-├── components/          # React components
-│   ├── Home.tsx        # Main dashboard
-│   ├── QuranReader.tsx # Quran reading interface
-│   ├── PrayerTimes.tsx # Prayer time display
-│   └── ...
-├── services/           # API and utility services
-│   ├── db.ts          # IndexedDB operations
-│   ├── geminiService.ts # AI service
-│   └── islamicService.ts # Islamic APIs
-├── android/            # Capacitor Android project
-├── ios/               # Capacitor iOS project (if added)
-└── dist/              # Built web assets
-```
+### Google Play Store
+
+1. **Prerequisites:**
+   - Java JDK 17+ (download from https://adoptium.net/temurin/releases/)
+   - Android Studio (download from https://developer.android.com/studio)
+   - Google Play Console account ($25 one-time fee)
+
+2. **Build Release APK:**
+   ```bash
+   npm run build
+   npx cap sync android
+   cd android
+   ./gradlew assembleRelease
+   ```
+
+3. **Create Signed APK:**
+   - In Android Studio, open the android project
+   - Build → Generate Signed Bundle/APK
+   - Create/upload a keystore
+   - Select APK, then release
+
+4. **Upload to Play Store:**
+   - Go to Google Play Console
+   - Create new app "Deen Companion"
+   - Upload the signed APK
+   - Fill in store listing, screenshots, description
+   - Submit for review
+
+### App Store (iOS) - macOS Required
+
+1. **Prerequisites:**
+   - macOS with Xcode
+   - Apple Developer Program ($99/year)
+
+2. **Build for iOS:**
+   ```bash
+   npm run build
+   npx cap add ios
+   npx cap sync ios
+   npx cap open ios
+   ```
+
+3. **Archive and Upload:**
+   - In Xcode: Product → Archive
+   - Upload to App Store Connect
+   - Submit for review
 
 ## 🤝 Contributing
 
