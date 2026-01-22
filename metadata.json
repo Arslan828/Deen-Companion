@@ -1,0 +1,8 @@
+{
+  "name": "Deen Companion",
+  "description": "A comprehensive Islamic companion app featuring accurate Prayer Times, Quran, Qibla direction, Tasbih, and an AI-powered Islamic assistant.",
+  "requestFramePermissions": [
+    "geolocation",
+    "notifications"
+  ]
+}
