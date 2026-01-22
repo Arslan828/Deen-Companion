@@ -25,7 +25,7 @@ A comprehensive Islamic companion app built with React, TypeScript, and Capacito
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/deen-companion.git
+   git clone https://github.com/Arslan828/Deen-Companion.git
    cd deen-companion
    ```
 
