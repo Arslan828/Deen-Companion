@@ -83,14 +83,6 @@ export const getDailyInspiration = async (): Promise<{ type: 'Hadith' | 'Quran',
         reference: 'Sahih Bukhari 1'
     };
 
-export const getDailyInspiration = async (): Promise<{ type: 'Hadith' | 'Quran', arabic: string, translation: string, reference: string }> => {
-    if (!apiKey || apiKey === 'PLACEHOLDER_API_KEY') return {
-        type: 'Hadith',
-        arabic: 'إِنَّمَا الْأَعْمَالُ بِالنِّيَّاتِ',
-        translation: 'Actions are judged by intentions.',
-        reference: 'Sahih Bukhari 1'
-    };
-
     try {
         const response = await ai.models.generateContent({
             model: 'gemini-2.0-flash',
