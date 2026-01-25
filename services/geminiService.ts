@@ -1,6 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 
-const apiKey = process.env.API_KEY || '';
+const apiKey = process.env.GEMINI_API_KEY || '';
 const ai = new GoogleGenAI({ apiKey });
 
 export const generateIslamicResponse = async (prompt: string): Promise<string> => {
@@ -9,11 +9,9 @@ export const generateIslamicResponse = async (prompt: string): Promise<string> =
   }
 
   try {
-    const response = await ai.models.generateContent({
+    const model = ai.getGenerativeModel({ 
       model: 'gemini-1.5-flash',
-      contents: prompt,
-      config: {
-        systemInstruction: `You are a knowledgeable and respectful Islamic assistant for an app called "Deen Companion".
+      systemInstruction: `You are a knowledgeable and respectful Islamic assistant for an app called "Deen Companion".
         Your goal is to provide accurate, balanced, and referenced information based on the Quran and Sunnah.
 
         Guidelines:
@@ -23,10 +21,11 @@ export const generateIslamicResponse = async (prompt: string): Promise<string> =
         4. If a question is about a specific Fatwa or highly controversial topic, advise the user to consult a local scholar, but provide general context.
         5. You can explain verses, provide Dua suggestions, or historical context.
         `,
-      },
     });
 
-    return response.text || "I apologize, I could not generate a response at this time.";
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    return response.text() || "I apologize, I could not generate a response at this time.";
   } catch (error) {
     console.error("Gemini API Error:", error);
     return "An error occurred while connecting to the AI service. Please check your API key and try again.";
@@ -42,15 +41,17 @@ export const getDailyInspiration = async (): Promise<{ type: 'Hadith' | 'Quran',
     };
 
     try {
-        const response = await ai.models.generateContent({
+        const model = ai.getGenerativeModel({ 
             model: 'gemini-1.5-flash',
-            contents: "Generate a random short inspirational Islamic quote. It can be a Quranic verse or a Sahih Hadith. Return ONLY valid JSON in this format: {\"type\": \"Hadith\" or \"Quran\", \"arabic\": \"arabic text\", \"translation\": \"english translation\", \"reference\": \"source reference\"}",
-            config: {
+            generationConfig: {
                 responseMimeType: "application/json",
             }
         });
+
+        const result = await model.generateContent("Generate a random short inspirational Islamic quote. It can be a Quranic verse or a Sahih Hadith. Return ONLY valid JSON in this format: {\"type\": \"Hadith\" or \"Quran\", \"arabic\": \"arabic text\", \"translation\": \"english translation\", \"reference\": \"source reference\"}");
+        const response = await result.response;
+        const text = response.text();
         
-        const text = response.text;
         if(text) {
              return JSON.parse(text);
         }
