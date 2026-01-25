@@ -37,8 +37,9 @@ A comprehensive Islamic companion app built with React, TypeScript, and Capacito
 3. Set up environment variables:
    - Copy `.env.local` and add your Gemini API key:
    ```
-   GEMINI_API_KEY=your_api_key_here
+   GEMINI_API_KEY=your_actual_api_key_here
    ```
+   - Get your API key from: https://aistudio.google.com/app/apikey
 
 4. Run the development server:
    ```bash

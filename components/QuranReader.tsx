@@ -1,19 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { getAllSurahs, getSurahAyahs } from '../services/islamicService';
+import { getAllSurahs, getSurahWithTranslation } from '../services/islamicService';
 import { Surah, Ayah } from '../types';
-import { Search, ChevronLeft, BookOpen, Loader2, Type, Languages } from 'lucide-react';
+import { Search, ChevronLeft, BookOpen, Loader2, Type, Languages, Settings } from 'lucide-react';
 
 const QuranReader: React.FC = () => {
     const [surahs, setSurahs] = useState<Surah[]>([]);
     const [selectedSurah, setSelectedSurah] = useState<Surah | null>(null);
-    const [ayahs, setAyahs] = useState<Ayah[]>([]);
+    const [arabicAyahs, setArabicAyahs] = useState<Ayah[]>([]);
+    const [translationAyahs, setTranslationAyahs] = useState<Ayah[]>([]);
     const [loading, setLoading] = useState(false);
     const [search, setSearch] = useState('');
-    
+
     // Settings
     const [fontSize, setFontSize] = useState(24);
     const [showSettings, setShowSettings] = useState(false);
-    const [translationLang, setTranslationLang] = useState('en'); // 'en', 'ur' (simulated)
+    const [showTranslation, setShowTranslation] = useState(true);
+    const [translationLang, setTranslationLang] = useState('en.sahih');
 
     useEffect(() => {
         setLoading(true);
@@ -22,13 +24,30 @@ const QuranReader: React.FC = () => {
             .finally(() => setLoading(false));
     }, []);
 
+    // Re-fetch translation when language changes
+    useEffect(() => {
+        if (selectedSurah && translationLang) {
+            setLoading(true);
+            getSurahWithTranslation(selectedSurah.number, translationLang)
+                .then((data) => {
+                    setArabicAyahs(data.arabic);
+                    setTranslationAyahs(data.translation);
+                    // If translation failed to load, it will be empty array
+                    if (data.translation.length === 0 && translationLang !== 'en.sahih') {
+                        console.warn(`Translation for ${translationLang} not available, showing English instead`);
+                    }
+                })
+                .finally(() => setLoading(false));
+        }
+    }, [translationLang, selectedSurah]);
+
     const handleSelectSurah = async (surah: Surah) => {
         setSelectedSurah(surah);
         setLoading(true);
         try {
-            // Ideally fetch translation based on translationLang, defaulting to standard uthmani for now
-            const data = await getSurahAyahs(surah.number);
-            setAyahs(data);
+            const data = await getSurahWithTranslation(surah.number, translationLang);
+            setArabicAyahs(data.arabic);
+            setTranslationAyahs(data.translation);
         } finally {
             setLoading(false);
         }
@@ -66,19 +85,53 @@ const QuranReader: React.FC = () => {
                         <div className="flex flex-col gap-4">
                             <div>
                                 <label className="text-xs text-gray-500 mb-2 block">Arabic Font Size</label>
-                                <input 
-                                    type="range" 
-                                    min="18" max="40" 
-                                    value={fontSize} 
+                                <input
+                                    type="range"
+                                    min="18" max="40"
+                                    value={fontSize}
                                     onChange={(e) => setFontSize(parseInt(e.target.value))}
                                     className="w-full accent-primary"
                                 />
                             </div>
-                            <div className="flex gap-2">
-                                <button className="flex-1 bg-gray-100 py-2 rounded text-xs font-bold text-primary">English</button>
-                                <button className="flex-1 bg-white border py-2 rounded text-xs text-gray-500">Urdu</button>
-                                <button className="flex-1 bg-white border py-2 rounded text-xs text-gray-500">Hindi</button>
+                            <div>
+                                <label className="text-xs text-gray-500 mb-2 block">Translation</label>
+                                <div className="flex items-center gap-3">
+                                    <label className="flex items-center gap-2">
+                                        <input
+                                            type="checkbox"
+                                            checked={showTranslation}
+                                            onChange={(e) => setShowTranslation(e.target.checked)}
+                                            className="accent-primary"
+                                        />
+                                        <span className="text-sm">Show Translation</span>
+                                    </label>
+                                </div>
                             </div>
+                            {showTranslation && (
+                                <div>
+                                    <label className="text-xs text-gray-500 mb-2 block">Translation Language</label>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => setTranslationLang('en.sahih')}
+                                            className={`flex-1 py-2 rounded text-xs font-bold ${translationLang === 'en.sahih' ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600'}`}
+                                        >
+                                            English
+                                        </button>
+                                        <button
+                                            onClick={() => setTranslationLang('ur.ahmedali')}
+                                            className={`flex-1 py-2 rounded text-xs font-bold ${translationLang === 'ur.ahmedali' ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600'}`}
+                                        >
+                                            Urdu
+                                        </button>
+                                        <button
+                                            onClick={() => setTranslationLang('hi.hindi')}
+                                            className={`flex-1 py-2 rounded text-xs font-bold ${translationLang === 'hi.hindi' ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600'}`}
+                                        >
+                                            Hindi
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
@@ -94,7 +147,7 @@ const QuranReader: React.FC = () => {
                     {loading ? (
                         <div className="flex justify-center py-20"><Loader2 className="animate-spin text-primary" /></div>
                     ) : (
-                        ayahs.map((ayah) => (
+                        arabicAyahs.map((ayah, index) => (
                             <div key={ayah.number} className="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
                                 <div className="flex justify-between items-start mb-4">
                                     <span className="bg-primary/10 text-primary text-xs font-bold px-2 py-1 rounded-md">
@@ -102,17 +155,23 @@ const QuranReader: React.FC = () => {
                                     </span>
                                     <button className="text-gray-300 hover:text-accent"><BookOpen size={16}/></button>
                                 </div>
-                                <p 
-                                    className="font-arabic text-right leading-[2.5] text-gray-800 dir-rtl mb-4" 
+                                <p
+                                    className="font-arabic text-right leading-[2.5] text-gray-800 dir-rtl mb-4"
                                     dir="rtl"
                                     style={{ fontSize: `${fontSize}px` }}
                                 >
                                     {ayah.text}
                                 </p>
-                                <p className="text-sm text-gray-600 leading-relaxed border-t border-gray-50 pt-4">
-                                    {/* Placeholder for translation as API requires separate call */}
-                                    [Translation loading capability would be integrated here fetching edition key]
-                                </p>
+                                {showTranslation && translationAyahs[index] && (
+                                    <p className="text-sm text-gray-600 leading-relaxed border-t border-gray-50 pt-4">
+                                        {translationAyahs[index].text}
+                                    </p>
+                                )}
+                                {showTranslation && !translationAyahs[index] && translationLang !== 'en.sahih' && (
+                                    <p className="text-sm text-orange-600 leading-relaxed border-t border-gray-50 pt-4">
+                                        Translation not available in selected language. Showing English translation.
+                                    </p>
+                                )}
                             </div>
                         ))
                     )}

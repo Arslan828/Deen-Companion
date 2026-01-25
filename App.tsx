@@ -10,6 +10,7 @@ import DuaCollection from './components/DuaCollection';
 import HadithBrowser from './components/HadithBrowser';
 import MoreMenu from './components/MoreMenu';
 import { initializeDatabase } from './services/islamicService';
+import { getAppSetting } from './services/islamicService';
 import { Home as HomeIcon, BookOpen, Compass, Grid, MessageCircle, Heart, Loader2 } from 'lucide-react';
 import { IonApp, IonContent, IonPage } from '@ionic/react';
 
@@ -18,11 +19,25 @@ export default function App() {
   const [location, setLocation] = useState<GeoLocation | null>(null);
   const [showDaroodReminder, setShowDaroodReminder] = useState(true);
   const [dbReady, setDbReady] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
     // Initialize DB
     initializeDatabase().then(() => {
         setDbReady(true);
+    }).catch((error) => {
+        console.error('Database initialization failed:', error);
+        setDbReady(true); // Continue anyway
+    });
+
+    // Load dark mode setting
+    getAppSetting('darkMode', false).then((isDark) => {
+        setDarkMode(isDark);
+        if (isDark) {
+            document.documentElement.classList.add('dark');
+        }
+    }).catch(() => {
+        // Continue without dark mode setting
     });
 
     if ('geolocation' in navigator) {
@@ -36,7 +51,7 @@ export default function App() {
         (error) => {
           console.error("Location error", error);
           // Default: Mecca
-          setLocation({ latitude: 21.4225, longitude: 39.8262 }); 
+          setLocation({ latitude: 21.4225, longitude: 39.8262 });
         }
       );
     }
@@ -61,7 +76,7 @@ export default function App() {
       case ViewState.NAMES_99: return <Names99 />;
       case ViewState.DUAS: return <DuaCollection />;
       case ViewState.HADITH: return <HadithBrowser />;
-      case ViewState.MORE: return <MoreMenu onNavigate={setActiveTab} />;
+      case ViewState.MORE: return <MoreMenu onNavigate={setActiveTab} darkMode={darkMode} setDarkMode={setDarkMode} />;
       default: return <Home location={location} onNavigate={setActiveTab} />;
     }
   };
@@ -69,7 +84,7 @@ export default function App() {
   const NavButton = ({ view, icon: Icon, label }: { view: ViewState, icon: any, label: string }) => (
     <button 
       onClick={() => setActiveTab(view)}
-      className={`flex flex-col items-center justify-center w-full py-2 transition-all duration-300 ${activeTab === view ? 'text-primary -translate-y-2' : 'text-gray-400'}`}
+      className={`flex flex-col items-center justify-center w-full py-2 transition-all duration-300 ${activeTab === view ? 'text-primary -translate-y-2' : darkMode ? 'text-gray-400' : 'text-gray-400'}`}
     >
       <div className={`p-2 rounded-full ${activeTab === view ? 'bg-primary text-white shadow-lg shadow-primary/30' : ''}`}>
         <Icon size={activeTab === view ? 24 : 22} strokeWidth={activeTab === view ? 2.5 : 2} />
@@ -81,11 +96,8 @@ export default function App() {
   );
 
   return (
-    <IonApp>
-      <IonPage>
-        <IonContent fullscreen>
-          <div className="h-screen w-full bg-off-white flex justify-center overflow-hidden font-sans text-gray-800">
-            <div className="w-full max-w-md h-full bg-white relative flex flex-col shadow-2xl overflow-hidden">
+    <div className={`h-screen w-full flex justify-center overflow-hidden font-sans ${darkMode ? 'dark bg-gray-900 text-white' : 'bg-off-white text-gray-800'}`}>
+      <div className={`w-full max-w-md h-full relative flex flex-col shadow-2xl overflow-hidden ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
 
               {/* Darood Reminder Overlay */}
               {showDaroodReminder && dbReady && (
@@ -119,7 +131,7 @@ export default function App() {
               </main>
 
               {/* Bottom Navigation */}
-              <nav className="bg-white border-t border-gray-100 px-2 pb-safe-area shadow-[0_-5px_20px_rgba(0,0,0,0.03)] z-30">
+              <nav className={`border-t px-2 pb-safe-area shadow-[0_-5px_20px_rgba(0,0,0,0.03)] z-30 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}>
                 <div className="flex justify-around items-center h-20">
                   <NavButton view={ViewState.HOME} icon={HomeIcon} label="Home" />
                   <NavButton view={ViewState.QURAN} icon={BookOpen} label="Quran" />
@@ -131,8 +143,5 @@ export default function App() {
 
             </div>
           </div>
-        </IonContent>
-      </IonPage>
-    </IonApp>
   );
 }

@@ -224,6 +224,43 @@ export const getSurahAyahs = async (surahNumber: number, edition: string = 'qura
   }
 };
 
+export const getSurahWithTranslation = async (surahNumber: number, translationEdition: string = 'en.sahih'): Promise<{arabic: Ayah[], translation: Ayah[]}> => {
+  try {
+    const [arabicResponse, translationResponse] = await Promise.all([
+      fetch(`${QURAN_API}/surah/${surahNumber}/quran-uthmani`),
+      fetch(`${QURAN_API}/surah/${surahNumber}/${translationEdition}`)
+    ]);
+
+    const arabicData = await arabicResponse.json();
+    const translationData = await translationResponse.json();
+
+    return {
+      arabic: arabicData.data.ayahs,
+      translation: translationData.data.ayahs
+    };
+  } catch (error) {
+    console.error(`Translation edition '${translationEdition}' not found, falling back to English:`, error);
+    // Fallback to English if the requested translation doesn't exist
+    try {
+      const [arabicResponse, englishResponse] = await Promise.all([
+        fetch(`${QURAN_API}/surah/${surahNumber}/quran-uthmani`),
+        fetch(`${QURAN_API}/surah/${surahNumber}/en.sahih`)
+      ]);
+
+      const arabicData = await arabicResponse.json();
+      const englishData = await englishResponse.json();
+
+      return {
+        arabic: arabicData.data.ayahs,
+        translation: englishData.data.ayahs
+      };
+    } catch (fallbackError) {
+      console.error('Fallback translation also failed:', fallbackError);
+      return { arabic: [], translation: [] };
+    }
+  }
+};
+
 export const getQiblaDirection = async (lat: number, lng: number): Promise<number> => {
     try {
         const response = await fetch(`${ALADHAN_API}/qibla/${lat}/${lng}`);
